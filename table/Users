@@ -1,0 +1,17 @@
+CREATE TABLE public.mst_user (
+	id varchar(36) NOT NULL,
+	created_by varchar(50) NOT NULL,
+	created_date int8 NOT NULL,
+	modified_by varchar(50) NULL,
+	modified_date int8 NULL,
+	first_name varchar(100) NOT NULL,
+	last_name varchar(100) NOT NULL,
+	email varchar(100) NOT NULL,
+	username varchar(100) NOT NULL,
+	password varchar(100) NOT NULL,
+	phone varchar(100) NOT NULL,
+	status varchar(30) NOT NULL,
+	CONSTRAINT mst_user_pkey PRIMARY KEY (id),
+	CONSTRAINT constraint_ms_user_username UNIQUE (username),
+	CONSTRAINT constraint_mst_user_email UNIQUE (email)
+);
