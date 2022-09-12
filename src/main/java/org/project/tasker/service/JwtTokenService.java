@@ -20,6 +20,4 @@ public interface JwtTokenService {
     String resolveToken(HttpServletRequest request);
 
     Authentication getAuthentication(String token);
-
-
 }

@@ -11,8 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder(toBuilder = true)
-public class RegisterResponse {
-    public String accessToken;
-    public String tokenType;
-    public String refreshToken;
+public class MessageResponse {
+    private String message;
 }

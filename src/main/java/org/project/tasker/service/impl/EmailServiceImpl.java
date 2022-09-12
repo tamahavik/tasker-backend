@@ -37,7 +37,7 @@ public class EmailServiceImpl implements EmailService {
             mailMessage.setText(details.getMsgBody());
             mailMessage.setSubject(details.getSubject());
             javaMailSender.send(mailMessage);
-            return "Mail Sent Successfully...";
+            return "SUCCESS";
         } catch (Exception e) {
             throw new TaskerException("Error when send email", INTERNAL_SERVER_ERROR);
         }
@@ -58,7 +58,7 @@ public class EmailServiceImpl implements EmailService {
 
             mimeMessageHelper.addAttachment(Objects.requireNonNull(file.getFilename()), file);
             javaMailSender.send(mimeMessage);
-            return "Mail sent Successfully";
+            return "SUCCESS";
         } catch (Exception e) {
             throw new TaskerException("Error when send email", INTERNAL_SERVER_ERROR);
         }

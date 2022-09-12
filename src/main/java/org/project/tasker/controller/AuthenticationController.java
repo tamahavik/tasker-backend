@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.project.tasker.model.dto.LoginRequest;
 import org.project.tasker.model.dto.LoginResponse;
 import org.project.tasker.model.dto.RegisterRequest;
-import org.project.tasker.model.dto.RegisterResponse;
+import org.project.tasker.model.dto.MessageResponse;
 import org.project.tasker.service.AuthenticationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,11 +44,13 @@ public class AuthenticationController {
 
     @PostMapping(value = "/register")
     @ResponseBody
-    public ResponseEntity<RegisterResponse> doRegister(@RequestBody @Valid RegisterRequest request) {
-        RegisterResponse response = authenticationService.doRegister(request);
+    public ResponseEntity<MessageResponse> doRegister(@RequestBody @Valid RegisterRequest request) {
+        MessageResponse response = authenticationService.doRegister(request);
         return ResponseEntity.status(CREATED)
                 .contentType(APPLICATION_JSON)
                 .body(response);
     }
+
+
 
 }
