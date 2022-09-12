@@ -1,0 +1,8 @@
+CREATE TABLE public.trn_user_validated(
+	id varchar(36) NOT NULL,
+	user_id varchar(36) NOT NULL,
+	activation_id varchar(36),
+	forgot_password_id varchar(36),
+	CONSTRAINT trn_user_validated_pkey PRIMARY KEY (id),
+	CONSTRAINT trn_user_validated_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.mst_user(id) ON DELETE CASCADE
+);
