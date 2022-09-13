@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "trn_user_validated")
@@ -41,11 +42,11 @@ public class AppUsersValidated {
     private String activationId;
 
     @Column(name = "activation_expired")
-    private Long activationExpired;
+    private LocalDateTime activationExpired;
 
     @Column(name = "forgot_password_id", length = 64)
     private String forgotPasswordId;
 
     @Column(name = "forgot_password_expired")
-    private Long forgotPasswordExpired;
+    private LocalDateTime forgotPasswordExpired;
 }

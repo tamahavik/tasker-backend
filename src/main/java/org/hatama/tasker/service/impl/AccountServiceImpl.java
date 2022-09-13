@@ -20,6 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.transaction.Transactional;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.UUID;
@@ -58,7 +59,7 @@ public class AccountServiceImpl implements AccountService {
         AppUsersValidated validatedUser = appUserValidatedRepository.findByActivationId(token)
                 .orElseThrow(() -> new TaskerException("Invalid token", UNAUTHORIZED));
 
-        if (Instant.now(clock).toEpochMilli() > validatedUser.getActivationExpired()) {
+        if (LocalDateTime.now(clock).isAfter(validatedUser.getActivationExpired())) {
             throw new TaskerException("Token expired", UNAUTHORIZED);
         }
 
@@ -86,12 +87,12 @@ public class AccountServiceImpl implements AccountService {
         AppUsers user = appUsersRepository.findByEmail(email)
                 .orElseThrow(() -> new TaskerException("Invalid Email", BAD_REQUEST));
 
-        String token = Base64.getEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes());
+        String token = Base64.getEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes()).toLowerCase();
         AppUsersValidated validated = appUserValidatedRepository.findByUserId(user)
                 .orElse(new AppUsersValidated()).toBuilder()
                 .userId(user)
                 .forgotPasswordId(token)
-                .forgotPasswordExpired(Instant.now(clock).plus(resetPasswordTokenValidity, ChronoUnit.MINUTES).toEpochMilli())
+                .forgotPasswordExpired(LocalDateTime.now().plus(resetPasswordTokenValidity, ChronoUnit.MINUTES))
                 .build();
 
         appUserValidatedRepository.save(validated);
@@ -116,7 +117,7 @@ public class AccountServiceImpl implements AccountService {
         AppUsersValidated validatedUser = appUserValidatedRepository.findByForgotPasswordId(token)
                 .orElseThrow(() -> new TaskerException("Invalid token", UNAUTHORIZED));
 
-        if (Instant.now(clock).toEpochMilli() > validatedUser.getForgotPasswordExpired()) {
+        if (LocalDateTime.now().isAfter(validatedUser.getForgotPasswordExpired())) {
             throw new TaskerException("Token expired", UNAUTHORIZED);
         }
 

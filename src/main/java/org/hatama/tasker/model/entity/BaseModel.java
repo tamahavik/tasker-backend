@@ -16,6 +16,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @MappedSuperclass
 @DynamicUpdate
@@ -38,21 +40,21 @@ public abstract class BaseModel implements Serializable {
     private String createdBy;
 
     @Column(name = "created_date", nullable = false)
-    private Long createdDate;
+    private LocalDateTime createdDate;
 
     @Column(name = "modified_by", length = 50)
     private String modifiedBy;
 
     @Column(name = "modified_date")
-    private Long modifiedDate;
+    private LocalDateTime modifiedDate;
 
     @PrePersist
     private void prePersist() {
-        this.createdDate = Instant.now().toEpochMilli();
+        this.createdDate = LocalDateTime.now();
     }
 
     @PreUpdate
     private void preUpdate() {
-        this.modifiedDate = Instant.now().toEpochMilli();
+        this.modifiedDate = LocalDateTime.now();
     }
 }

@@ -27,6 +27,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.transaction.Transactional;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.UUID;
@@ -113,7 +114,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String token = Base64.getEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes()).toLowerCase();
         AppUsersValidated validated = AppUsersValidated.builder()
                 .activationId(token)
-                .activationExpired(Instant.now(clock).plus(tokenActivatedValidity, ChronoUnit.MINUTES).toEpochMilli())
+                .activationExpired(LocalDateTime.now().plus(tokenActivatedValidity, ChronoUnit.MINUTES))
                 .userId(saved)
                 .build();
 

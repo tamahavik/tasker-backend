@@ -1,9 +1,9 @@
 CREATE TABLE public.mst_user (
 	id varchar(36) NOT NULL,
 	created_by varchar(50) NOT NULL,
-	created_date int8 NOT NULL,
+	created_date TIMESTAMPTZ NOT NULL,
 	modified_by varchar(50) NULL,
-	modified_date int8 NULL,
+	modified_date TIMESTAMPTZ NULL,
 	first_name varchar(100) NOT NULL,
 	last_name varchar(100) NOT NULL,
 	email varchar(100) NOT NULL,
