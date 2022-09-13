@@ -18,10 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.transaction.Transactional;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.UUID;
 
 import static org.project.tasker.enums.UserStatus.ACTIVE;
-import static org.project.tasker.enums.UserStatus.RESET;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
@@ -32,32 +35,46 @@ public class AccountServiceImpl implements AccountService {
     @Value("${auth.url.reset}")
     private String urlReset;
 
+    @Value("${token.valid.reset}")
+    private long resetPasswordTokenValidity;
+
     private final AppUserValidatedRepository appUserValidatedRepository;
     private final AppUsersRepository appUsersRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
-    public AccountServiceImpl(AppUserValidatedRepository appUserValidatedRepository, AppUsersRepository appUsersRepository, EmailService emailService, PasswordEncoder passwordEncoder) {
+    public AccountServiceImpl(AppUserValidatedRepository appUserValidatedRepository, AppUsersRepository appUsersRepository, EmailService emailService, PasswordEncoder passwordEncoder, Clock clock) {
         this.appUserValidatedRepository = appUserValidatedRepository;
         this.appUsersRepository = appUsersRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
+        this.clock = clock;
     }
 
     @Transactional
     @Override
     public MessageResponse activatedAccount(String token) {
         AppUsersValidated validatedUser = appUserValidatedRepository.findByActivationId(token)
-                .orElseThrow(() -> new TaskerException("Invalid token", UNAUTHORIZED))
-                .toBuilder()
+                .orElseThrow(() -> new TaskerException("Invalid token", UNAUTHORIZED));
+
+        if (Instant.now(clock).toEpochMilli() > validatedUser.getActivationExpired()) {
+            throw new TaskerException("Token expired", UNAUTHORIZED);
+        }
+
+        validatedUser = validatedUser.toBuilder()
                 .activationId(null)
+                .activationExpired(null)
                 .build();
+
         AppUsers users = validatedUser.getUserId().toBuilder()
                 .modifiedBy("SYSTEM")
                 .status(UserStatus.ACTIVE.name())
                 .build();
+
         appUserValidatedRepository.save(validatedUser);
         appUsersRepository.save(users);
+
         return MessageResponse.builder()
                 .message("User active, please login")
                 .build();
@@ -67,16 +84,14 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public MessageResponse requestResetPassword(String email) {
         AppUsers user = appUsersRepository.findByEmail(email)
-                .orElseThrow(() -> new TaskerException("Invalid Email", BAD_REQUEST))
-                .toBuilder()
-                .status(RESET.name())
-                .build();
+                .orElseThrow(() -> new TaskerException("Invalid Email", BAD_REQUEST));
 
-        String token = UUID.randomUUID().toString();
+        String token = Base64.getEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes());
         AppUsersValidated validated = appUserValidatedRepository.findByUserId(user)
                 .orElse(new AppUsersValidated()).toBuilder()
                 .userId(user)
                 .forgotPasswordId(token)
+                .forgotPasswordExpired(Instant.now(clock).plus(resetPasswordTokenValidity, ChronoUnit.MINUTES).toEpochMilli())
                 .build();
 
         appUserValidatedRepository.save(validated);
@@ -101,6 +116,10 @@ public class AccountServiceImpl implements AccountService {
         AppUsersValidated validatedUser = appUserValidatedRepository.findByForgotPasswordId(token)
                 .orElseThrow(() -> new TaskerException("Invalid token", UNAUTHORIZED));
 
+        if (Instant.now(clock).toEpochMilli() > validatedUser.getForgotPasswordExpired()) {
+            throw new TaskerException("Token expired", UNAUTHORIZED);
+        }
+
         return ResetPasswordResponse.builder()
                 .token(token)
                 .email(validatedUser.getUserId().getEmail())
@@ -115,6 +134,7 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new TaskerException("Invalid token", UNAUTHORIZED))
                 .toBuilder()
                 .forgotPasswordId(null)
+                .forgotPasswordExpired(null)
                 .build();
 
         if (!request.getEmail().equalsIgnoreCase(validatedUser.getUserId().getEmail())) {
@@ -129,8 +149,9 @@ public class AccountServiceImpl implements AccountService {
 
         appUserValidatedRepository.save(validatedUser);
         appUsersRepository.save(users);
+
         return MessageResponse.builder()
-                .message("Change password")
+                .message("Password has been change")
                 .build();
     }
 }

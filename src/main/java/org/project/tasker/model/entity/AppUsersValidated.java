@@ -37,9 +37,15 @@ public class AppUsersValidated {
     @JoinColumn(name = "user_id")
     private AppUsers userId;
 
-    @Column(name = "activation_id", length = 36)
+    @Column(name = "activation_id", length = 64)
     private String activationId;
 
-    @Column(name = "forgot_password_id", length = 36)
+    @Column(name = "activation_expired")
+    private Long activationExpired;
+
+    @Column(name = "forgot_password_id", length = 64)
     private String forgotPasswordId;
+
+    @Column(name = "forgot_password_expired")
+    private Long forgotPasswordExpired;
 }

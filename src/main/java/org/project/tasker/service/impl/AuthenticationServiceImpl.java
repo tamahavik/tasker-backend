@@ -6,8 +6,8 @@ import org.project.tasker.mapper.AppUsersMapper;
 import org.project.tasker.model.dto.EmailDetailRequest;
 import org.project.tasker.model.dto.LoginRequest;
 import org.project.tasker.model.dto.LoginResponse;
-import org.project.tasker.model.dto.RegisterRequest;
 import org.project.tasker.model.dto.MessageResponse;
+import org.project.tasker.model.dto.RegisterRequest;
 import org.project.tasker.model.entity.AppUsers;
 import org.project.tasker.model.entity.AppUsersValidated;
 import org.project.tasker.repository.AppUserValidatedRepository;
@@ -25,6 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.transaction.Transactional;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.UUID;
 
 import static org.project.tasker.enums.UserStatus.INACTIVE;
@@ -41,20 +45,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${auth.url.activated}")
     private String urlActivated;
 
+    @Value("${token.valid.active}")
+    private long tokenActivatedValidity;
+
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService jwtTokenService;
     private final AppUsersRepository appUsersRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final AppUserValidatedRepository appUserValidatedRepository;
+    private final Clock clock;
 
-    public AuthenticationServiceImpl(AuthenticationManager authenticationManager, JwtTokenService jwtTokenService, AppUsersRepository appUsersRepository, PasswordEncoder passwordEncoder, EmailService emailService, AppUserValidatedRepository appUserValidatedRepository) {
+    public AuthenticationServiceImpl(AuthenticationManager authenticationManager, JwtTokenService jwtTokenService, AppUsersRepository appUsersRepository, PasswordEncoder passwordEncoder, EmailService emailService, AppUserValidatedRepository appUserValidatedRepository, Clock clock) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenService = jwtTokenService;
         this.appUsersRepository = appUsersRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.appUserValidatedRepository = appUserValidatedRepository;
+        this.clock = clock;
     }
 
     @Override
@@ -101,9 +110,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         AppUsers saved = appUsersRepository.save(user);
 
-        String activationId = UUID.randomUUID().toString();
+        String token = Base64.getEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes()).toLowerCase();
         AppUsersValidated validated = AppUsersValidated.builder()
-                .activationId(activationId)
+                .activationId(token)
+                .activationExpired(Instant.now(clock).plus(tokenActivatedValidity, ChronoUnit.MINUTES).toEpochMilli())
                 .userId(saved)
                 .build();
 
@@ -113,7 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         EmailDetailRequest emailDetailRequest = EmailDetailRequest.builder()
                 .recipient(saved.getEmail())
                 .subject("Active Your Account")
-                .msgBody("To active your account please use this link " + url + urlActivated + activationId)
+                .msgBody("To active your account please use this link " + url + urlActivated + token)
                 .build();
 
         emailService.sendSimpleMail(emailDetailRequest);

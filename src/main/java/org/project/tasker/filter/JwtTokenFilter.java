@@ -23,7 +23,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getServletPath().contains("/api/v1/auth/")) {
+        if (request.getServletPath().contains("/api/v1/auth/") || request.getServletPath().contains("/api/v1/account/")) {
             filterChain.doFilter(request, response);
         } else {
             String token = jwtTokenService.resolveToken(request);
