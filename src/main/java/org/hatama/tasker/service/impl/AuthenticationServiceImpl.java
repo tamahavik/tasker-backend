@@ -1,11 +1,13 @@
 package org.hatama.tasker.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hatama.tasker.exception.TaskerException;
 import org.hatama.tasker.mapper.AppUsersMapper;
 import org.hatama.tasker.model.dto.EmailDetailRequest;
 import org.hatama.tasker.model.dto.LoginRequest;
 import org.hatama.tasker.model.dto.LoginResponse;
 import org.hatama.tasker.model.dto.MessageResponse;
+import org.hatama.tasker.model.dto.RegisterRequest;
 import org.hatama.tasker.model.entity.AppUsers;
 import org.hatama.tasker.model.entity.AppUsersValidated;
 import org.hatama.tasker.repository.AppUserValidatedRepository;
@@ -13,8 +15,6 @@ import org.hatama.tasker.repository.AppUsersRepository;
 import org.hatama.tasker.service.AuthenticationService;
 import org.hatama.tasker.service.EmailService;
 import org.hatama.tasker.service.JwtTokenService;
-import org.hatama.tasker.exception.TaskerException;
-import org.hatama.tasker.model.dto.RegisterRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,7 +26,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.transaction.Transactional;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -90,14 +89,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public MessageResponse doRegister(RegisterRequest request) {
         boolean existUsername = appUsersRepository.findByUsername(request.getUsername())
                 .isPresent();
-
         if (existUsername) {
             throw new TaskerException("Username already exist", BAD_REQUEST);
         }
 
         boolean existEmail = appUsersRepository.findByEmail(request.getEmail())
                 .isPresent();
-
         if (existEmail) {
             throw new TaskerException("Email already exist", BAD_REQUEST);
         }
@@ -114,7 +111,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String token = Base64.getEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes()).toLowerCase();
         AppUsersValidated validated = AppUsersValidated.builder()
                 .activationId(token)
-                .activationExpired(LocalDateTime.now().plus(tokenActivatedValidity, ChronoUnit.MINUTES))
+                .activationExpired(LocalDateTime.now(clock).plus(tokenActivatedValidity, ChronoUnit.MINUTES))
                 .userId(saved)
                 .build();
 
